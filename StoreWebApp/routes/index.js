@@ -7,7 +7,7 @@ var router = express.Router();
 /* GET home page. */
 router.get('/', passport.authenticate('mca-website-strategy', {session: false }),
     function(req, res){
-      res.render('index', {title: 'ThinkIBM Consumer'});
+      res.render('index', {title: 'IBM Cloud Architecture'});
     }
 );
 

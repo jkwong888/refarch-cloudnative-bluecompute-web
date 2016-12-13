@@ -3,7 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "mocha -R tap"
+  },
+  "directories": {
+    "test": "test"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
@@ -20,6 +24,10 @@
     "request-promise-json": "^1.0.4",
     "serve-favicon": "~2.3.0",
     "url-pattern": "^1.0.1",
-    "bms-mca-token-validation-strategy": "2.0.6"
+    "bms-mca-token-validation-strategy": "2.0.6",
+    "mocha": "^2.3.4",
+    "request": "^2.67.0",
+    "cfenv": "^1.0.0",
+    "chai": "^3.4.1"
   }
 }
