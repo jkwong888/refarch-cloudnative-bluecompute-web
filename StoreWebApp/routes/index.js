@@ -5,16 +5,17 @@ var router = express.Router();
 
 
 /* GET home page. */
-router.get('/', passport.authenticate('mca-website-strategy', {session: false }),
-    function(req, res){
-      res.render('index', {title: 'IBM Cloud Architecture'});
+router.get('/', function (req, res) {
+    console.log(req.session.authContext);
+    if (req.session.authContext) {
+        var parsedContext = JSON.parse(req.session.authContext);
+        if (parsedContext['imf.user']['displayName']) {
+            res.locals.username = parsedContext['imf.user']['displayName'];
+            console.log("username", res.locals.username);
+        }
     }
-);
 
-router.get('/authenticated', function (req, res) {
-  res.render('index', {title: 'ThinkIBM Consumer'});
+    res.render('index', {title: 'ThinkIBM Consumer'});
 });
-
-
 
 module.exports = router;

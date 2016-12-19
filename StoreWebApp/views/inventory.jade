@@ -9,8 +9,13 @@ block content
           a(href="/").pure-menu-link Home
         li.pure-menu-item.pure-menu-selected
           a(href="#").pure-menu-link Inventory
-        //li.pure-menu-item
-        //  a(href="/login").pure-menu-link Log in
+        if username == null
+          li.pure-menu-item
+            a(href="/login").pure-menu-link Sign In
+        else
+          li.pure-menu-item
+            a(href="/logout").pure-menu-link !{username} Sign Out
+
   div.content-wrapper
     //div.content.sort-bar
     //  div.pure-g

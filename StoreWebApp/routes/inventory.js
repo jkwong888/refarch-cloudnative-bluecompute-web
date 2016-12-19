@@ -16,7 +16,14 @@ var _apis = config.get('APIs');
 
 /* GET inventory listing and render the page */
 router.get('/', function (req, res) {
-  session = req.session;
+    console.log(req.session.authContext);
+    if (req.session.authContext) {
+        var parsedContext = JSON.parse(req.session.authContext);
+        if (parsedContext['imf.user']['displayName']) {
+            res.locals.username = parsedContext['imf.user']['displayName'];
+            console.log("username", res.locals.username);
+        }
+    }
 
   //page_filter = (typeof req.query.filter !== 'undefined') ? JSON.stringify(req.query.filter.order) : false;
   page_filter = "";

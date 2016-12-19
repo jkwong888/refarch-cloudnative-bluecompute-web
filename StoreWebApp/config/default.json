@@ -1,12 +1,12 @@
 {
   "Application": {
-    "client_id": "88423212-e956-4e1f-b971-5c5f4cc77200",
+    "client_id": "2fc53e52-eb10-4e54-b185-e86fa19e1437",
     "client_secret": ""
   },
   "API-Server": {
     "protocol": "https",
-    "host": "api.us.apiconnect.ibmcloud.com",
-    "org": "centusibmcom-cloudnative-qa",
+    "host": "api.eu.apiconnect.ibmcloud.com",
+    "org": "centusibmcom-cloudnative-integration",
     "catalog": "bluecompute"
   },
   "APIs": {
@@ -40,9 +40,9 @@
         "password"
       ],
       "scopes": [
-        "inventory"
+        "review"
       ],
-      "redirect_url": "http://localhost"
+      "redirect_url": "http://localhost:8000/login/callback"
     }
   }
 }

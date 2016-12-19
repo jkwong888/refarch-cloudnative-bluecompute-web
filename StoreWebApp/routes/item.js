@@ -18,6 +18,16 @@ var _apis = config.get('APIs');
 router.get('/:id', function (req, res) {
   session = req.session;
 
+  if (req.session.authContext) {
+      var parsedContext = JSON.parse(req.session.authContext);
+      if (parsedContext['imf.user']['displayName']) {
+          res.locals.username = parsedContext['imf.user']['displayName'];
+          console.log("username", res.locals.username);
+      }
+  }
+
+
+
   setGetItemOptions(req, res)
     .then(sendItemReq)
     .then(renderPage)

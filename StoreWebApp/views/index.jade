@@ -9,6 +9,13 @@ block content
           a.pure-menu-link Home
         li.pure-menu-item
           a(href="/inventory").pure-menu-link Inventory
+        if username == null
+          li.pure-menu-item
+            a(href="/login").pure-menu-link Sign In
+        else
+          li.pure-menu-item
+            a(href="/logout").pure-menu-link !{username} Sign Out
+
   div.splash-container
     div.splash
       h1.splash-head BlueCompute Store!
