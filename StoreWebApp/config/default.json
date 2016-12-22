@@ -42,7 +42,7 @@
       "scopes": [
         "review"
       ],
-      "redirect_url": "http://localhost:8000/login/callback"
+      "redirect_url": "https://us-bluecompute-web-jkwong-dev.mybluemix.net/login/callback"
     }
   }
 }
