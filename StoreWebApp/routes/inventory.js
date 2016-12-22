@@ -16,15 +16,6 @@ var _apis = config.get('APIs');
 
 /* GET inventory listing and render the page */
 router.get('/', function (req, res) {
-    console.log(req.session.authContext);
-    if (req.session.authContext) {
-        var parsedContext = JSON.parse(req.session.authContext);
-        if (parsedContext['imf.user']['displayName']) {
-            res.locals.username = parsedContext['imf.user']['displayName'];
-            console.log("username", res.locals.username);
-        }
-    }
-
   //page_filter = (typeof req.query.filter !== 'undefined') ? JSON.stringify(req.query.filter.order) : false;
   page_filter = "";
 
@@ -38,6 +29,7 @@ router.get('/', function (req, res) {
 
 function setGetItemsOptions(req, res) {
   var query = req.query;
+  var session = req.session;
 
   var items_url = api_url.stringify({
     protocol: _apiServer.protocol,
@@ -47,7 +39,6 @@ function setGetItemsOptions(req, res) {
     api: _apis.inventory.base_path,
     operation: "items"
   });
-
 
   var options = {
     method: 'GET',
@@ -68,12 +59,15 @@ function setGetItemsOptions(req, res) {
     // Get OAuth Access Token, if needed
     if (_apis.inventory.require.indexOf("oauth") != -1) {
 
+        console.log(session);
       // If already logged in, add token to request
-      if (typeof session.oauth2token !== 'undefined') {
+      if (session.authContext != null && 
+          session.authContext.access_token != null) {
 
-        console.log("Render Inventory with Token: " + session.oauth2token)
-        options.headers.Authorization = 'Bearer ' + session.oauth2token;
+        console.log("Render Inventory with Token: " + session.authContext.access_token)
+        options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
         fulfill({
+          req: req,
           options: options,
           res: res
         });
@@ -84,6 +78,7 @@ function setGetItemsOptions(req, res) {
 
     }
     else fulfill({
+      req: req,
       options: options,
       res: res
     });
@@ -92,6 +87,7 @@ function setGetItemsOptions(req, res) {
 }
 
 function sendApiReq(function_input) {
+  var req = function_input.req;
   var options = function_input.options;
   var res = function_input.res;
 
@@ -103,6 +99,7 @@ function sendApiReq(function_input) {
       .then(function (result) {
           //console.log("Inventory call succeeded with result: " + JSON.stringify(result));
         fulfill({
+          req: req,
           data: result,
           res: res
         });
@@ -110,6 +107,7 @@ function sendApiReq(function_input) {
       .fail(function (reason) {
         console.log("Inventory call failed with reason: " + JSON.stringify(reason));
         reject({
+          req: req,
           err: reason,
           res: res
         });
@@ -118,33 +116,42 @@ function sendApiReq(function_input) {
 }
 
 function renderPage(function_input) {
+  var req = function_input.req;
   var data = function_input.data;
   var res = function_input.res;
 
+  console.log(req.session.authContext);
+  if (req.session.authContext) {
+      var idToken = req.session.authContext['idToken'];
+      if (idToken != null && idToken['imf.user']['displayName'] != null) {
+          res.locals.username = idToken['imf.user']['displayName'];
+          console.log("username", res.locals.username);
+      }
+  }
 
-    var imageBaseUrl = api_url.stringify({
-    protocol: _apiServer.protocol,
-    host: _apiServer.host,
-    org: _apiServerOrg,
-    cat: _apiServerCatalog,
-    api: "",
-    operation: ""
+  var imageBaseUrl = api_url.stringify({
+      protocol: _apiServer.protocol,
+      host: _apiServer.host,
+      org: _apiServerOrg,
+      cat: _apiServerCatalog,
+      api: "",
+      operation: ""
   });
 
   // Render the page with the results of the API call
   res.render('inventory', {
-    title: 'IBM Cloud Architecture',
-    item_count: data.length,
-    item_array: data,
-    base_url: imageBaseUrl,
-    sort_select: page_filter
+      title: 'IBM Cloud Architecture',
+      item_count: data.length,
+      item_array: data,
+      base_url: imageBaseUrl,
+      sort_select: page_filter
   });
 }
 
 function renderErrorPage(function_input) {
-  var err = function_input.err;
-  var res = function_input.res;
-  res.render('error', {reason: err});
+    var err = function_input.err;
+    var res = function_input.res;
+    res.render('error', {reason: err});
 }
 
 module.exports = router;

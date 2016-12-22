@@ -16,6 +16,8 @@ block content
       form(action="/login" method="post").pure-form.pure-form-aligned
         fieldset
           div.pure-control-group
+            input(id="id" name="id" type="hidden" placeholder="id" value=item.id).login-input
+          div.pure-control-group
             input(id="username" name="username" type="text" placeholder="Username").login-input
           div.pure-control-group
             input(id="password" name="password" type="password" placeholder="Password").login-input

@@ -8,9 +8,9 @@ var router = express.Router();
 router.get('/', function (req, res) {
     console.log(req.session.authContext);
     if (req.session.authContext) {
-        var parsedContext = JSON.parse(req.session.authContext);
-        if (parsedContext['imf.user']['displayName']) {
-            res.locals.username = parsedContext['imf.user']['displayName'];
+        var idToken = req.session.authContext['idToken'];
+        if (idToken != null && idToken['imf.user']['displayName'] != null) {
+            res.locals.username = idToken['imf.user']['displayName'];
             console.log("username", res.locals.username);
         }
     }

@@ -17,16 +17,15 @@ var _apis = config.get('APIs');
 /* Handle the GET request for obtaining item information and render the page */
 router.get('/:id', function (req, res) {
   session = req.session;
+  res.locals.itemId = req.params.id;
 
   if (req.session.authContext) {
-      var parsedContext = JSON.parse(req.session.authContext);
-      if (parsedContext['imf.user']['displayName']) {
-          res.locals.username = parsedContext['imf.user']['displayName'];
+      var idToken = req.session.authContext['idToken'];
+      if (idToken != null && idToken['imf.user']['displayName'] != null) {
+          res.locals.username = idToken['imf.user']['displayName'];
           console.log("username", res.locals.username);
       }
   }
-
-
 
   setGetItemOptions(req, res)
     .then(sendItemReq)
@@ -36,8 +35,20 @@ router.get('/:id', function (req, res) {
 
 });
 
+/* Handle the GET request for creating a new item review */
+router.get('/:id/submitReview', function (req, res) {
+  session = req.session;
+
+  setGetItemOptions(req, res)
+    .then(sendItemReq)
+    .then(renderReviewPage)
+    .catch(renderErrorPage)
+    .done();
+
+});
+
 /* Handle the POST request for creating a new item review */
-router.post('/submitReview', function (req, res) {
+router.post('/:id/submitReview', function (req, res) {
   session = req.session;
 
   setNewReviewOptions(req, res)
@@ -58,9 +69,6 @@ function setGetItemOptions(req, res) {
     api: _apis.inventory.base_path,
     operation: "items/" + params.id
   });
-
-
-  //var item_url = "https://api.us.apiconnect.ibmcloud.com/aseriyusibmcom-redbooks/inventory-catalog/api/items/" + params.id
 
   var getItem_options = {
     method: 'GET',
@@ -97,9 +105,10 @@ function setGetItemOptions(req, res) {
     if (_apis.inventory.require.indexOf("oauth") != -1) {
 
       // If already logged in, add token to request
-      if (typeof session.oauth2token !== 'undefined') {
-        getItem_options.headers.Authorization = 'Bearer ' + session.oauth2token;
-        getItemReviews_options.headers.Authorization = 'Bearer ' + session.oauth2token;
+      if (session.authContext != null &&
+          typeof session.authContext.access_token !== 'undefined') {
+        getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+        getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
         fulfill({
           getItem_options: getItem_options,
           getItemReviews_options: getItemReviews_options,
@@ -112,6 +121,7 @@ function setGetItemOptions(req, res) {
 
     }
     else fulfill({
+      req: req,
       getItem_options: getItem_options,
       getItemReviews_options: getItemReviews_options,
       res: res
@@ -121,10 +131,11 @@ function setGetItemOptions(req, res) {
 }
 
 function setNewReviewOptions(req, res) {
+  var params = req.params;
   var form_body = req.body;
 
   var reqBody = {
-    date: new Date(),
+    review_date: new Date(),
     rating: form_body.rating
   };
 
@@ -133,18 +144,18 @@ function setNewReviewOptions(req, res) {
   if (form_body.email !== '') reqBody.reviewer_email = form_body.email;
   if (form_body.comment !== '') reqBody.comment = form_body.comment;
 
-  var reviews_url = api_url.stringify({
+  var post_reviews_url = api_url.stringify({
     protocol: _apiServer.protocol,
     host: _apiServer.host,
     org: _apiServerOrg,
     cat: _apiServerCatalog,
     api: _apis.inventory.base_path,
-    operation: "reviews/list?itemId=" + params.id
+    operation: "reviews/comment?itemId=" + params.id
   });
 
   var options = {
     method: 'POST',
-    url: reviews_url,
+    url: post_reviews_url,
     strictSSL: false,
     headers: {},
     body: reqBody,
@@ -159,11 +170,12 @@ function setNewReviewOptions(req, res) {
     if (_apis.inventory.require.indexOf("oauth") != -1) {
 
       // If already logged in, add token to request
-      if (typeof session.oauth2token !== 'undefined') {
-        options.headers.Authorization = 'Bearer ' + session.oauth2token;
+      if (session.authContext != null &&
+          typeof session.authContext.access_token !== 'undefined') {
+        options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
         fulfill({
           options: options,
-          item_id: form_body.itemId,
+          item_id: params.id,
           res: res
         });
       } else {
@@ -174,11 +186,10 @@ function setNewReviewOptions(req, res) {
     }
     else fulfill({
       options: options,
-      item_id: form_body.itemId,
+      item_id: params.id,
       res: res
     });
   });
-
 }
 
 function sendItemReq(function_input) {
@@ -227,6 +238,28 @@ function submitNewReview(function_input) {
       console.log("ERR: " + JSON.stringify(err));
       res.redirect('/item/' + item_id);
     });
+}
+
+function renderReviewPage(function_input) {
+  var item = function_input.data.item;
+  var res = function_input.res;
+
+ var imageBaseUrl = api_url.stringify({
+    protocol: _apiServer.protocol,
+    host: _apiServer.host,
+    org: _apiServerOrg,
+    cat: _apiServerCatalog,
+    api: "",
+    operation: ""
+  });
+
+  // Render the page with the results of the API call
+  res.render('submitreview', {
+    title: 'IBM Cloud Architecture',
+    item: item,
+    itemId: item.id,
+    base_url: imageBaseUrl,
+  });
 }
 
 function renderPage(function_input) {

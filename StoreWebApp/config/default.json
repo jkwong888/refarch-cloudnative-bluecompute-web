@@ -1,21 +1,21 @@
 {
   "Application": {
-    "client_id": "2fc53e52-eb10-4e54-b185-e86fa19e1437",
+    "client_id": "5dd3b8bc-9d11-41ab-94c0-c2710c97372f",
     "client_secret": ""
   },
   "API-Server": {
     "protocol": "https",
-    "host": "api.eu.apiconnect.ibmcloud.com",
-    "org": "centusibmcom-cloudnative-integration",
+    "host": "api.us.apiconnect.ibmcloud.com",
+    "org": "centusibmcom-jkwong-dev",
     "catalog": "bluecompute"
   },
   "APIs": {
     "inventory": {
       "base_path": "/api",
       "require": [
-          "client_id"
+          "client_id",
 //        "client_secret",
-//        "oauth"
+          "oauth"
       ]
     },
     "financing": {
