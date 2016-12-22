@@ -6,5 +6,3 @@ applications:
   name: jkwong-bluecompute-webapp-qa
   host: jkwong-bluecompute-webapp-qa
   disk_quota: 1024M
-  services:
-    - bluecompute-android3-AdvancedMobileAccess
