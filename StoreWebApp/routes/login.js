@@ -1,6 +1,5 @@
 var express = require('express');
 var config = require('config');
-var passport = require('passport');
 var request = require('request');
 var querystring = require('querystring');
 
@@ -8,8 +7,6 @@ var UrlPattern = require('url-pattern');
 var router = express.Router();
 var Promise = require('promise');
 //var oauth = require('../server/js/oauth.js');
-//var Oauth2Strategy = require('passport-oauth2');
-
 
 var api_url = new UrlPattern('(:protocol)\\://(:host)(/:org)(/:cat)(:api)(:operation)');
 var _myApp = config.get('Application');
