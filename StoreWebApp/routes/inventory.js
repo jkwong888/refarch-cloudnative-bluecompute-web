@@ -120,13 +120,9 @@ function renderPage(function_input) {
   var data = function_input.data;
   var res = function_input.res;
 
-  console.log(req.session.authContext);
   if (req.session.authContext) {
-      var idToken = req.session.authContext['idToken'];
-      if (idToken != null && idToken['imf.user']['displayName'] != null) {
-          res.locals.username = idToken['imf.user']['displayName'];
-          console.log("username", res.locals.username);
-      }
+      var username = req.session.authContext.username;
+      res.locals.username = req.session.authContext.username;
   }
 
   var imageBaseUrl = api_url.stringify({

@@ -16,19 +16,49 @@ block content
             a(href="/logout").pure-menu-link !{username} Sign Out
 
   div.content-wrapper
-    div.content.is-center
+      div.pure-g
+        div.pure-u-1-5.item-top-boxes
+          img(src= base_url + item.img).pure-img
+        div.pure-u-2-5.item-top-boxes
+          div.pure-u-1.item-info-box.section-heading.item-name-box
+            p= item.name
+          div.pure-u-1.item-info-box.item-price-box#item-price
+            p= '$' + item.price
 
-      form(action='submitReview',method='post').pure-form.pure-form-aligned
-        fieldset
-          div.pure-control-group
-            input(id="name" name="name" type="text" placeholder="Name").login-input
-          div.pure-control-group
-            input(id="email" name="email" type="text" placeholder="Email").login-input
-          div.pure-control-group
-            input(id="comment" name="comment" type="textarea" placeholder="Comment").login-input
-          div.pure-control-group
-            input(id="rating" name="rating" type="text" placeholder="Rating").login-input
-          div.pure-controls
-            button(type="submit" value="Submit").pure-button.pure-button-primary.login-button Submit 
+        div.pure-u-3-5.item-top-boxes
+          form(action='submitReview',method='post').pure-form.pure-form-aligned
+            fieldset
+              div.pure-control-group
+                div.pure-u-1-2
+                    label(for='name' class='control-label').pure-input-1 Name
+                div.pure-u-1-2
+                    div.controls
+                        label(id='name').pure-label-1 !{username}
+              div.pure-control-group
+                div.pure-u-1-2
+                    label(for='email', class='control-label') Email
+                div.pure-u-1-2
+                    div.controls
+                        input(id="email" name="email" type="email" placeholder="Email").pure-input-1
+              div.pure-control-group
+                div.pure-u-1-2
+                    label(for='rating', class='control-label') Rating
+                div.pure-u-1-2
+                    div.controls
+                        select(id="rating" name="rating" placeholder="Rating").pure-input-1
+                            option 5
+                            option 4
+                            option 3
+                            option 2
+                            option 1
+              div.pure-control-group
+                div.pure-u-1-2
+                    label(for='comment', class='control-label') Comment
+                div.pure-u-1-2
+                    div.controls
+                        textarea(id="comment" name="comment" placeholder="Comment").pure-input-1
+              div.pure-u-1-1
+                  div.pure-controls
+                        button(type="submit" value="Submit").pure-button.pure-button-primary Submit 
 
     div.footer.l-box.is-center <a href="https://developer.ibm.com/architecture/" target="_blank" style="text-decoration: none;color: white">IBM Cloud Architecture Center</a>

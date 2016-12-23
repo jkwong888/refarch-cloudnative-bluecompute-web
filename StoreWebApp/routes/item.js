@@ -19,14 +19,6 @@ router.get('/:id', function (req, res) {
   session = req.session;
   res.locals.itemId = req.params.id;
 
-  if (req.session.authContext) {
-      var idToken = req.session.authContext['idToken'];
-      if (idToken != null && idToken['imf.user']['displayName'] != null) {
-          res.locals.username = idToken['imf.user']['displayName'];
-          console.log("username", res.locals.username);
-      }
-  }
-
   setGetItemOptions(req, res)
     .then(sendItemReq)
     .then(renderPage)
@@ -112,7 +104,8 @@ function setGetItemOptions(req, res) {
         fulfill({
           getItem_options: getItem_options,
           getItemReviews_options: getItemReviews_options,
-          res: res
+          res: res,
+          req: req
         });
       } else {
         // Otherwise redirect to login page
@@ -124,7 +117,8 @@ function setGetItemOptions(req, res) {
       req: req,
       getItem_options: getItem_options,
       getItemReviews_options: getItemReviews_options,
-      res: res
+      res: res,
+      req: req
     });
   });
 
@@ -136,11 +130,11 @@ function setNewReviewOptions(req, res) {
 
   var reqBody = {
     review_date: new Date(),
-    rating: form_body.rating
+    rating: form_body.rating,
+    reviewer_name: req.session.authContext.username
   };
 
   // Add optional portions to the request body
-  if (form_body.name !== '') reqBody.reviewer_name = form_body.name;
   if (form_body.email !== '') reqBody.reviewer_email = form_body.email;
   if (form_body.comment !== '') reqBody.comment = form_body.comment;
 
@@ -176,7 +170,8 @@ function setNewReviewOptions(req, res) {
         fulfill({
           options: options,
           item_id: params.id,
-          res: res
+          res: res,
+          req: req
         });
       } else {
         // Otherwise redirect to login page
@@ -187,7 +182,8 @@ function setNewReviewOptions(req, res) {
     else fulfill({
       options: options,
       item_id: params.id,
-      res: res
+      res: res,
+      req: req
     });
   });
 }
@@ -196,6 +192,7 @@ function sendItemReq(function_input) {
   var getItem_options = function_input.getItem_options;
   var getItemReviews_options = function_input.getItemReviews_options;
   var res = function_input.res;
+  var req = function_input.req;
 
   // Make API call for item and reviews data
   return new Promise(function (fulfill, reject) {
@@ -209,7 +206,8 @@ function sendItemReq(function_input) {
                 item: item,
                 reviews: reviews
               },
-              res: res
+              res: res,
+              req: req
             });
           })
           .done();
@@ -217,6 +215,7 @@ function sendItemReq(function_input) {
       .fail(function (reason) {
         reject({
           err: reason,
+          req: req,
           res: res
         });
       })
@@ -243,6 +242,12 @@ function submitNewReview(function_input) {
 function renderReviewPage(function_input) {
   var item = function_input.data.item;
   var res = function_input.res;
+  var req = function_input.req;
+
+  if (req.session.authContext) {
+      var username = req.session.authContext.username;
+      res.locals.username = req.session.authContext.username;
+  }
 
  var imageBaseUrl = api_url.stringify({
     protocol: _apiServer.protocol,
@@ -263,29 +268,35 @@ function renderReviewPage(function_input) {
 }
 
 function renderPage(function_input) {
-  var item = function_input.data.item;
-  var reviews = function_input.data.reviews;
-  var res = function_input.res;
+    var item = function_input.data.item;
+    var reviews = function_input.data.reviews;
+    var res = function_input.res;
+    var req = function_input.req;
 
-console.log("Review Data: " + JSON.stringify(reviews));
+    if (req.session.authContext) {
+        var username = req.session.authContext.username;
+        res.locals.username = req.session.authContext.username;
+    }
 
- var imageBaseUrl = api_url.stringify({
-    protocol: _apiServer.protocol,
-    host: _apiServer.host,
-    org: _apiServerOrg,
-    cat: _apiServerCatalog,
-    api: "",
-    operation: ""
-  });
+    console.log("Review Data: " + JSON.stringify(reviews));
 
-  // Render the page with the results of the API call
-  res.render('item', {
-    title: 'IBM Cloud Architecture',
-    item: item,
-    reviews: reviews,
-    base_url: imageBaseUrl,
-    reviews_count: reviews.length
-  });
+    var imageBaseUrl = api_url.stringify({
+        protocol: _apiServer.protocol,
+        host: _apiServer.host,
+        org: _apiServerOrg,
+        cat: _apiServerCatalog,
+        api: "",
+        operation: ""
+    });
+
+    // Render the page with the results of the API call
+    res.render('item', {
+        title: 'IBM Cloud Architecture',
+        item: item,
+        reviews: reviews,
+        base_url: imageBaseUrl,
+        reviews_count: reviews.length
+    });
 }
 
 function renderErrorPage(function_input) {

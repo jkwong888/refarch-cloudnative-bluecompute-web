@@ -6,6 +6,7 @@ var querystring = require('querystring');
 var UrlPattern = require('url-pattern');
 var router = express.Router();
 var Promise = require('promise');
+var http = require('request-promise-json');
 //var oauth = require('../server/js/oauth.js');
 
 var api_url = new UrlPattern('(:protocol)\\://(:host)(/:org)(/:cat)(:api)(:operation)');
@@ -32,6 +33,16 @@ var token_url = api_url.stringify({
     api: _apis.oauth20.base_path,
     operation: _apis.oauth20.paths.token
 });
+
+var introspect_url = api_url.stringify({
+    protocol: _apiServer.protocol,
+    host: _apiServer.host,
+    org: _apiServerOrg,
+    cat: _apiServerCatalog,
+    api: _apis.oauth20.base_path,
+    operation: _apis.oauth20.paths.introspect
+});
+
 
 var client_id = _myApp.client_id;
 
@@ -77,70 +88,149 @@ router.get('/',
 
 // GET callback 
 router.get('/callback', 
-            function(req, res, next) {
-                console.log("LOGIN CALLBACK: ", req.query);
-                // what did my response body look like
-                //console.log(req.headers);
-                
-                // post to the token endpoint with my code (if it exists)
-                var code = req.query.code;
+            function(req, res) {
+                console.log("LOGIN CALLBACK, query: %j", req.query);
+                console.log("LOGIN CALLBACK, headers: %j", req.headers);
 
-                if (!code) {
-                    console.log("No code found");
-                    res.on('data', function (chunk) {
-                        console.log('BODY: ' + chunk);
-                    });
-
-                    // Store accessToken in session in
-                    req.session.accessToken = req.query.access_token; 
-                    req.session.authContext = req.query.access_token;
-                    res.redirect('/')
-
-                    next();
-                }
-
-                var tokenUri = token_url;
-                var formData = {
-                    'grant_type': 'authorization_code',
-                    'redirect_uri': _apis.oauth20.redirect_url,
-                    'code': code,
-                    'client_id': client_id
-                }
-                
-                request.post({ url: tokenUri, form: formData }, 
-                             function (err, response, body) { 
-                                 console.log("BODY: ", body);
-                                 // Access and identity tokens will be received in response body
-                                 var parsedBody = JSON.parse(body); 
-
-                                 if (parsedBody.error == null) {
-                                     console.log("error:" + parsedBody.error);
-                                 }
-
-                                 // Store accessToken and identityToken in session in base64 format
-                                 var authContext = {
-                                     'access_token': parsedBody.access_token,
-                                     'refresh_token': parsedBody.refresh_token
-                                 }
-
-                                 // Decode identity token and store it as authContext
-                                 if (parsedBody.id_token) {
-                                     var idTokenComponents = parsedBody.id_token.split("."); // [header, payload, signature] 
-                                     authContext['idToken'] = new Buffer(idTokenComponents[1],"base64").toString();
-                                 }
-
-                                 req.session.authContext = authContext;
-
-                                 // Redirect to home page after successful authentication
-                                 console.log("AUTHENTICATED! auth context = ", authContext);
-                                 res.redirect("/"); 
-                             });
-                // Supply clientId and clientSecret as Basic Http Auth credentials
-                //.auth(client_id, client_secret); 
-
-
-
+                setGetAccessTokenOptions(req, res)
+                  .then(getAccessToken)
+                  .then(getTokenIntrospect)
+                  .then(redirectToRoot)
+                  .done();
             });
+
+function setGetAccessTokenOptions(req, res) {
+    console.log("setGetAccessTokenOptions");
+
+    // post to the token endpoint with my code (if it exists)
+    var code = req.query.code;
+
+    var tokenUri = token_url;
+    var formData = {
+        'grant_type': 'authorization_code',
+        'redirect_uri': _apis.oauth20.redirect_url,
+        'code': code,
+        'client_id': client_id
+    }
+
+    var getAccessTokenOptions = {
+        method: 'POST',
+        url: tokenUri,
+        strictSSL: false,
+        headers: {},
+        form: formData,
+        JSON: false
+    }
+
+    return new Promise(function (fulfill) {
+        if (!code) {
+            console.log("No code found");
+            res.on('data', function (chunk) {
+                console.log('BODY: ' + chunk);
+            });
+
+            // Store accessToken in session in
+            req.session.accessToken = req.query.access_token; 
+            req.session.authContext = req.query.access_token;
+            res.redirect('/')
+        }
+
+        // set options
+        fulfill({
+            req: req,
+            res: res,
+            getAccessToken_options: getAccessTokenOptions
+        });
+    });
+}
+
+function getAccessToken(function_input) {
+    console.log("getAccessToken");
+
+    var req = function_input.req;
+    var res = function_input.res;
+    var options = function_input.getAccessToken_options;
+
+    return new Promise(function (fulfill) {
+        http.request(options)
+          .then(function(parsedBody) {
+              console.log("BODY: ", parsedBody);
+              // Access and identity tokens will be received in response body
+
+              if (parsedBody.error == null) {
+                  console.log("error:" + parsedBody.error);
+              }
+
+              // Store accessToken and identityToken in session in base64 format
+              var authContext = {
+                  'access_token': parsedBody.access_token,
+                  'refresh_token': parsedBody.refresh_token
+              }
+
+              // Decode identity token and store it as authContext
+              if (parsedBody.id_token) {
+                  var idTokenComponents = parsedBody.id_token.split("."); // [header, payload, signature] 
+                  authContext['idToken'] = new Buffer(idTokenComponents[1],"base64").toString();
+              }
+
+              req.session.authContext = authContext;
+
+              // Redirect to home page after successful authentication
+              console.log("AUTHENTICATED! auth context = ", authContext);
+              var formData = {
+                  'token': parsedBody.access_token,
+                  'token_type_hint': 'access_token'
+              }
+
+              // create POST request to token introspect endpoint to get username
+              var getTokenIntrospectOptions = {
+                  method: 'POST',
+                  url: introspect_url,
+                  strictSSL: false,
+                  headers: {'X-IBM-Client-ID': _myApp.client_id},
+                  form: formData,
+                  JSON: true
+              }
+
+              fulfill({
+                  req: req,
+                  res: res,
+                  getTokenIntrospect_options: getTokenIntrospectOptions
+              });
+          }).done();
+    });
+}
+
+function redirectToRoot(function_input) {
+    var req = function_input.req;
+    var res = function_input.res;
+
+    res.redirect('/');
+}
+
+function getTokenIntrospect(function_input) {
+    console.log("getTokenIntrospect");
+    var req = function_input.req;
+    var res = function_input.res;
+    var options = function_input.getTokenIntrospect_options;
+
+    return new Promise(function(fulfill) {
+        http.request(options)
+          .then(function(introspect) {
+              // extract the username
+
+              console.log("token introspect: ", introspect);
+              console.log("token introspect username: ", introspect.username);
+
+              req.session.authContext.username = introspect.username;
+
+              fulfill({
+                  req: req,
+                  res: res
+              });
+          }).done();
+    });
+}
 
 function loginWithOAuth(req, res) {
   var form_body = req.body;
