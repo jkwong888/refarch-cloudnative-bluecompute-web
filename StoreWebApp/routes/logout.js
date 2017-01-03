@@ -20,7 +20,7 @@ router.get('/',
 
                 req.session.authContext = null;
                 res.redirect('/');
-            },
+            }
 );
 
 module.exports = router;
