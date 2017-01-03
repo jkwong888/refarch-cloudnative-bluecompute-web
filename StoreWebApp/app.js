@@ -9,6 +9,7 @@ var index = require('./routes/index');
 var inventory = require('./routes/inventory');
 var item = require('./routes/item');
 var login = require('./routes/login');
+var logout = require('./routes/logout');
 var logistics = require('./routes/logistics');
 var financing = require('./routes/financing');
 var app = express();
@@ -38,6 +39,7 @@ app.use('/', index);
 app.use('/inventory', inventory);
 app.use('/item', item);
 app.use('/login', login);
+app.use('/logout', logout);
 app.use('/logistics', logistics);
 app.use('/financing', financing);
 
