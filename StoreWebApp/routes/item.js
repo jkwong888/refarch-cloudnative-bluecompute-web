@@ -73,7 +73,33 @@ router.get('/:id/submitReview', function (req, res) {
 router.post('/:id/submitReview', function (req, res) {
   session = req.session;
 
-  setNewReviewOptions(req, res)
+  return new Promise(function (fulfill) {
+    // Get OAuth Access Token, if needed
+    if (_apis.inventory.require.indexOf("oauth") != -1) {
+
+      // If already logged in, add token to request
+      if (session.authContext != null &&
+          typeof session.authContext.access_token !== 'undefined') {
+        getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+        getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+        fulfill({
+          getItem_options: getItem_options,
+          getItemReviews_options: getItemReviews_options,
+          res: res,
+          req: req
+        });
+      } else {
+        // Otherwise redirect to login page
+        res.redirect('/login');
+      }
+    } else {
+        fulfill({
+            req: req,
+            res: res
+        });
+    }
+  })
+    .then(setNewReviewOptions)
     .then(submitNewReview)
     .catch(renderErrorPage)
     .done();
@@ -133,7 +159,10 @@ function setGetItemOptions(function_input) {
   });
 }
 
-function setNewReviewOptions(req, res) {
+function setNewReviewOptions(function_input) {
+  var req = function_input.req;
+  var res = function_input.res;
+
   var params = req.params;
   var form_body = req.body;
 
