@@ -205,8 +205,12 @@ function getAccessToken(function_input) {
 function redirectToRoot(function_input) {
     var req = function_input.req;
     var res = function_input.res;
+    var redirectTo = req.session.redirectTo;
 
-    if (req.headers.referer != null) {
+    if (redirectTo != null) {
+        delete req.session.redirectTo;
+        res.redirect(redirectTo);
+    } else if (req.headers.referer != null) {
         // if referer is in the header, redirect there
         res.redirect(req.headers.referer);
     } else {

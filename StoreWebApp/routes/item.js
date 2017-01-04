@@ -49,6 +49,8 @@ router.get('/:id/submitReview', function (req, res) {
         });
       } else {
         // Otherwise redirect to login page
+        var params = req.params;
+        res.session.redirectTo = '/items/' + params.id + '/submitReview';
         res.redirect('/login');
       }
     } else {
