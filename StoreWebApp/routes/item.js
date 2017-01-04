@@ -19,7 +19,7 @@ router.get('/:id', function (req, res) {
   session = req.session;
   res.locals.itemId = req.params.id;
 
-  return new Promise(fulfill) {
+  return new Promise(function (fulfill) {
       fulfill({
           req: req,
           res: res
