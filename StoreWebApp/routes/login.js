@@ -55,8 +55,8 @@ var session;
 // GET request for login screen 
 router.get('/', 
             function(req, res, next) {
-                console.log("LOGIN");
-                console.log(req.headers);
+                //console.log("LOGIN");
+                //console.log(req.headers);
                 
                 if (req.session.authContext) {
                     res.redirect(req.headers.referer);
@@ -89,8 +89,8 @@ router.get('/',
 // GET callback 
 router.get('/callback', 
             function(req, res) {
-                console.log("LOGIN CALLBACK, query: %j", req.query);
-                console.log("LOGIN CALLBACK, headers: %j", req.headers);
+//                console.log("LOGIN CALLBACK, query: %j", req.query);
+//                console.log("LOGIN CALLBACK, headers: %j", req.headers);
 
                 setGetAccessTokenOptions(req, res)
                   .then(getAccessToken)
@@ -154,6 +154,7 @@ function getAccessToken(function_input) {
     return new Promise(function (fulfill) {
         http.request(options)
           .then(function(parsedBody) {
+              console.log("GET ACCESS TOKEN RETURNED, headers: %j", req.headers);
               console.log("BODY: ", parsedBody);
               // Access and identity tokens will be received in response body
 
@@ -219,6 +220,7 @@ function getTokenIntrospect(function_input) {
           .then(function(introspect) {
               // extract the username
 
+              console.log("GET TOKEN INTROSPECT RETURNED, headers: %j", req.headers);
               console.log("token introspect: ", introspect);
               console.log("token introspect username: ", introspect.username);
 
