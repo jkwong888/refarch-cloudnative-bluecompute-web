@@ -93,27 +93,7 @@ function setGetItemOptions(req, res) {
 
   return new Promise(function (fulfill) {
 
-    // Get OAuth Access Token, if needed
-    if (_apis.inventory.require.indexOf("oauth") != -1) {
-
-      // If already logged in, add token to request
-      if (session.authContext != null &&
-          typeof session.authContext.access_token !== 'undefined') {
-        getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        fulfill({
-          getItem_options: getItem_options,
-          getItemReviews_options: getItemReviews_options,
-          res: res,
-          req: req
-        });
-      } else {
-        // Otherwise redirect to login page
-        res.redirect('/login');
-      }
-
-    }
-    else fulfill({
+    fulfill({
       req: req,
       getItem_options: getItem_options,
       getItemReviews_options: getItemReviews_options,
@@ -177,7 +157,6 @@ function setNewReviewOptions(req, res) {
         // Otherwise redirect to login page
         res.redirect('/login');
       }
-
     }
     else fulfill({
       options: options,

@@ -56,28 +56,7 @@ function setGetItemsOptions(req, res) {
 
   return new Promise(function (fulfill) {
 
-    // Get OAuth Access Token, if needed
-    if (_apis.inventory.require.indexOf("oauth") != -1) {
-
-        console.log(session);
-      // If already logged in, add token to request
-      if (session.authContext != null && 
-          session.authContext.access_token != null) {
-
-        console.log("Render Inventory with Token: " + session.authContext.access_token)
-        options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        fulfill({
-          req: req,
-          options: options,
-          res: res
-        });
-      } else {
-        // Otherwise redirect to login page
-        res.redirect('/login');
-      }
-
-    }
-    else fulfill({
+    fulfill({
       req: req,
       options: options,
       res: res
