@@ -43,11 +43,7 @@ router.get('/:id/submitReview', function (req, res) {
       // If already logged in, add token to request
       if (session.authContext != null &&
           typeof session.authContext.access_token !== 'undefined') {
-        getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
         fulfill({
-          getItem_options: getItem_options,
-          getItemReviews_options: getItemReviews_options,
           res: res,
           req: req
         });
