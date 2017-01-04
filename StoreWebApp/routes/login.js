@@ -80,7 +80,7 @@ router.get('/',
 
                 authorizationUri += "?" + querystring.stringify(qStr);
 
-                console.log("Redirect to: " + authorizationUri);
+//                console.log("Redirect to: " + authorizationUri);
                 res.set('X-IBM-Client-ID', clientId);
                 res.redirect(authorizationUri);  
             }
@@ -100,7 +100,7 @@ router.get('/callback',
             });
 
 function setGetAccessTokenOptions(req, res) {
-    console.log("setGetAccessTokenOptions");
+//    console.log("setGetAccessTokenOptions");
 
     // post to the token endpoint with my code (if it exists)
     var code = req.query.code;
@@ -145,7 +145,7 @@ function setGetAccessTokenOptions(req, res) {
 }
 
 function getAccessToken(function_input) {
-    console.log("getAccessToken");
+//    console.log("getAccessToken");
 
     var req = function_input.req;
     var res = function_input.res;
@@ -154,8 +154,8 @@ function getAccessToken(function_input) {
     return new Promise(function (fulfill) {
         http.request(options)
           .then(function(parsedBody) {
-              console.log("GET ACCESS TOKEN RETURNED, headers: %j", req.headers);
-              console.log("BODY: ", parsedBody);
+//              console.log("GET ACCESS TOKEN RETURNED, headers: %j", req.headers);
+//              console.log("BODY: ", parsedBody);
               // Access and identity tokens will be received in response body
 
               if (parsedBody.error == null) {
@@ -177,7 +177,7 @@ function getAccessToken(function_input) {
               req.session.authContext = authContext;
 
               // Redirect to home page after successful authentication
-              console.log("AUTHENTICATED! auth context = ", authContext);
+              // console.log("AUTHENTICATED! auth context = ", authContext);
               var formData = {
                   'token': parsedBody.access_token,
                   'token_type_hint': 'access_token'
@@ -206,11 +206,16 @@ function redirectToRoot(function_input) {
     var req = function_input.req;
     var res = function_input.res;
 
-    res.redirect('/');
+    if (req.headers.referer != null) {
+        // if referer is in the header, redirect there
+        res.redirect(req.headers.referer);
+    } else {
+        res.redirect('/');
+    }
 }
 
 function getTokenIntrospect(function_input) {
-    console.log("getTokenIntrospect");
+//    console.log("getTokenIntrospect");
     var req = function_input.req;
     var res = function_input.res;
     var options = function_input.getTokenIntrospect_options;
@@ -220,9 +225,9 @@ function getTokenIntrospect(function_input) {
           .then(function(introspect) {
               // extract the username
 
-              console.log("GET TOKEN INTROSPECT RETURNED, headers: %j", req.headers);
-              console.log("token introspect: ", introspect);
-              console.log("token introspect username: ", introspect.username);
+//              console.log("GET TOKEN INTROSPECT RETURNED, headers: %j", req.headers);
+//              console.log("token introspect: ", introspect);
+//              console.log("token introspect username: ", introspect.username);
 
               req.session.authContext.username = introspect.username;
 
@@ -239,7 +244,7 @@ function loginWithOAuth(req, res) {
   var username = form_body.username;
   var password = form_body.password;
 
-  console.log("loginWithOAuth");
+//  console.log("loginWithOAuth");
 
   return new Promise(function (fulfill) {
     oauth.login(username, password, session)
