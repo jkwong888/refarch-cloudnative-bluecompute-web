@@ -124,110 +124,13 @@ function setGetItemOptions(function_input) {
   if (_apis.inventory.require.indexOf("client_secret") != -1) getItemReviews_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
 
   return new Promise(function (fulfill) {
-
-    // Get OAuth Access Token, if needed
-    if (_apis.inventory.require.indexOf("oauth") != -1) {
-
-      // If already logged in, add token to request
-      if (session.authContext != null &&
-          typeof session.authContext.access_token !== 'undefined') {
-        getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        fulfill({
+      fulfill({
+          req: req,
           getItem_options: getItem_options,
           getItemReviews_options: getItemReviews_options,
-          res: res,
-          req: req
-        });
-      } else {
-        // Otherwise redirect to login page
-        res.redirect('/login');
-      }
-
-    }
-    else fulfill({
-      req: req,
-      getItem_options: getItem_options,
-      getItemReviews_options: getItemReviews_options,
-      res: res,
-      req: req
-    });
+          res: res
+      });
   });
-
-}
-
-function setGetItemOptions(req, res) {
-  var params = req.params;
-
-  var item_url = api_url.stringify({
-    protocol: _apiServer.protocol,
-    host: _apiServer.host,
-    org: _apiServerOrg,
-    cat: _apiServerCatalog,
-    api: _apis.inventory.base_path,
-    operation: "items/" + params.id
-  });
-
-  var getItem_options = {
-    method: 'GET',
-    url: item_url,
-    strictSSL: false,
-    headers: {}
-  };
-
-  if (_apis.inventory.require.indexOf("client_id") != -1) getItem_options.headers["X-IBM-Client-Id"] = _myApp.client_id;
-  if (_apis.inventory.require.indexOf("client_secret") != -1) getItem_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
-
-  var reviews_url = api_url.stringify({
-    protocol: _apiServer.protocol,
-    host: _apiServer.host,
-    org: _apiServerOrg,
-    cat: _apiServerCatalog,
-    api: _apis.inventory.base_path,
-    operation: "reviews/list?itemId=" + params.id
-  });
-
-  var getItemReviews_options = {
-    method: 'GET',
-    url: reviews_url,
-    strictSSL: false,
-    headers: {}
-  };
-
-  if (_apis.inventory.require.indexOf("client_id") != -1) getItemReviews_options.headers["X-IBM-Client-Id"] = _myApp.client_id;
-  if (_apis.inventory.require.indexOf("client_secret") != -1) getItemReviews_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
-
-  return new Promise(function (fulfill) {
-
-    // Get OAuth Access Token, if needed
-    if (_apis.inventory.require.indexOf("oauth") != -1) {
-
-      // If already logged in, add token to request
-      if (session.authContext != null &&
-          typeof session.authContext.access_token !== 'undefined') {
-        getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        fulfill({
-          getItem_options: getItem_options,
-          getItemReviews_options: getItemReviews_options,
-          res: res,
-          req: req
-        });
-      } else {
-        // Otherwise redirect to login page
-        res.redirect('/login');
-      }
-
-    }
-    else fulfill({
-      req: req,
-      getItem_options: getItem_options,
-      getItemReviews_options: getItemReviews_options,
-      res: res,
-      req: req
-    });
-  });
-
 }
 
 function setNewReviewOptions(req, res) {
