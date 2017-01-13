@@ -25,6 +25,7 @@ router.get('/:id', function (req, res) {
 
     Promise.resolve(options)
         .then(sendItemReq)
+        .then(sendItemReviewReq)
         .then(renderPage)
         .catch(renderErrorPage)
         .done();
@@ -177,101 +178,118 @@ function doOAuth(function_input) {
     var session = req.session;
     var params = req.params;
 
-    return new Promise(function (fullfill, reject) {
-        console.log("doOAuth");
-        // Get OAuth Access Token, if needed
-        if (_apis.inventory.require.indexOf("oauth") != -1) {
-            // If already logged in, add token to request
-            if (session.authContext == null ||
-                typeof session.authContext.access_token == 'undefined') {
-                    // Otherwise redirect to login page
-                    console.log("sending you to /login");
-                    req.session.redirectTo = '/item/' + params.id + '/submitReview';
-                    res.redirect('/login');
-                    return;
+    return new Promise(function (fulfill, reject) {
+        try {
+            // Get OAuth Access Token, if needed
+            if (_apis.inventory.require.indexOf("oauth") != -1) {
+                // If already logged in, add token to request
+                if (session.authContext == null ||
+                    typeof session.authContext.access_token == 'undefined') {
+                        // Otherwise redirect to login page
+                        req.session.redirectTo = '/item/' + params.id + '/submitReview';
+                        res.redirect('/login');
+                        return;
+                    }
+
+                // add token to authorization
+                if (function_input.options != null) {
+                    function_input.options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+                }
+
+                if (function_input.getItem_options != null) {
+                    function_input.getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+                }
+
+                if (function_input.getItemReviews_options != null) {
+                    function_input.getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+                }
             }
 
-            // add token to authorization
-            if (function_input.options != null) {
-                function_input.options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-            }
+            var my_opts = {
+                options: function_input.options,
+                item_id: params.id,
+                getItemReviews_options: function_input.getItemReviews_options,
+                getItem_options: function_input.getItem_options,
+                res: function_input.res,
+                req: function_input.req
+            };
 
-            if (function_input.getItem_options != null) {
-                function_input.getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-            }
-
-            if (function_input.getItemReviews_options != null) {
-                function_input.getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-            }
+            fulfill(my_opts);
+        } catch (err) {
+            reject({err: err});
         }
-
-        var my_opts = {
-            options: function_input.options,
-            item_id: params.id,
-            getItemReviews_options: function_input.getItemReviews_options,
-            getItem_options: function_input.getItem_options,
-            res: function_input.res,
-            req: function_input.req
-        };
-
-        fulfill(my_opts);
     });
 }
 
 function sendItemReq(function_input) {
-  console.log("sendItemReq");
   var getItem_options = function_input.getItem_options;
-  var getItemReviews_options = function_input.getItemReviews_options;
   var res = function_input.res;
   var req = function_input.req;
 
-    // TODO: use Promise.all here instead of one at at time
-  // Make API call for item and reviews data
-  return new Promise(function (fulfill, reject) {
-    http.request(getItem_options)
-      .then(function (item) {
+    // Make API call for item and reviews data
+    return new Promise(function (fulfill, reject) {
+        http.request(getItem_options)
+            .then(function (item) {
+                fulfill({
+                    data: {
+                        item: item,
+                    },
+                    getItemReviews_options: function_input.getItemReviews_options,
+                    res: res,
+                    req: req
+                });
+
+            }).fail(function (reason) {
+                reject({
+                    err: reason,
+                    req: req,
+                    res: res
+                });
+            })
+            .done();
+    });
+}
+
+function sendItemReviewReq(function_input) {
+    var getItemReviews_options = function_input.getItemReviews_options;
+    var res = function_input.res;
+    var req = function_input.req;
+
+    // Make API call for reviews data
+    return new Promise(function (fulfill, reject) {
         http.request(getItemReviews_options)
-          .then(function (reviews) {
-            fulfill({
-              data: {
-                item: item,
-                reviews: reviews
-              },
-              res: res,
-              req: req
-            });
-          }).fail(function (reason) {
-              reject({
-                  err: reason,
-                  req: req,
-                  res: res
-              });
-          })
-          .done();
-      }).fail(function (reason) {
-        reject({
-          err: reason,
-          req: req,
-          res: res
-        });
-      })
-      .done();
-  });
+            .then(function (reviews) {
+                fulfill({
+                    data: {
+                        item: function_input.data.item,
+                        reviews: reviews
+                    },
+                    res: res,
+                    req: req
+                });
+            }).fail(function (reason) {
+                reject({
+                    err: reason,
+                    req: req,
+                    res: res
+                });
+            })
+            .done();
+    });
 }
 
 function submitNewReview(function_input) {
   var options = function_input.options;
   var item_id = function_input.item_id;
   var res = function_input.res;
-    console.log('submitNewReview');
 
   http.request(options)
     .then(function (data) {
-      console.log("DATA: " + JSON.stringify(data));
+      //console.log("DATA: " + JSON.stringify(data));
       res.redirect('/item/' + item_id);
     })
     .fail(function (err) {
-      console.log("ERR: " + JSON.stringify(err));
+      //console.log("ERR: " + JSON.stringify(err));
       res.redirect('/item/' + item_id);
     });
 }
@@ -337,9 +355,10 @@ function renderPage(function_input) {
 }
 
 function renderErrorPage(function_input) {
-  var err = function_input.err;
-  var res = function_input.res;
-  res.render('error', {reason: err});
+    console.log(function_input.err);
+    var err = function_input.err;
+    var res = function_input.res;
+    res.render('error', {reason: err});
 }
 
 module.exports = router;
