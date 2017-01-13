@@ -10,8 +10,8 @@ var session;
 // GET request for logout
 router.get('/', 
             function(req, res, next) {
-                console.log("LOGOUT");
-                console.log(req.headers);
+//                console.log("LOGOUT");
+//                console.log(req.headers);
 
                 
                 if (!req.session.authContext) {

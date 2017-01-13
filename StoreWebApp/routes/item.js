@@ -19,11 +19,9 @@ router.get('/:id', function (req, res) {
   session = req.session;
   res.locals.itemId = req.params.id;
 
-  return new Promise(function (fulfill) {
-      fulfill({
+  Promise.resolve({
           req: req,
           res: res
-      });
   }).then(setGetItemOptions)
     .then(sendItemReq)
     .then(renderPage)
@@ -71,7 +69,7 @@ router.get('/:id/submitReview', function (req, res) {
 router.post('/:id/submitReview', function (req, res) {
   session = req.session;
 
-  return new Promise(function (fulfill) {
+  return new Promise(function (fulfill, reject) {
     // Get OAuth Access Token, if needed
     if (_apis.inventory.require.indexOf("oauth") != -1) {
 
@@ -147,13 +145,11 @@ function setGetItemOptions(function_input) {
   if (_apis.inventory.require.indexOf("client_id") != -1) getItemReviews_options.headers["X-IBM-Client-Id"] = _myApp.client_id;
   if (_apis.inventory.require.indexOf("client_secret") != -1) getItemReviews_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
 
-  return new Promise(function (fulfill) {
-      fulfill({
+  Promise.resolve({
           req: req,
           getItem_options: getItem_options,
           getItemReviews_options: getItemReviews_options,
           res: res
-      });
   });
 }
 
@@ -163,6 +159,8 @@ function setNewReviewOptions(function_input) {
 
   var params = req.params;
   var form_body = req.body;
+
+    console.log('setNewReviewOptions');
 
   var reqBody = {
     review_date: new Date(),
@@ -195,10 +193,9 @@ function setNewReviewOptions(function_input) {
   if (_apis.inventory.require.indexOf("client_id") != -1) options.headers["X-IBM-Client-Id"] = _myApp.client_id;
   if (_apis.inventory.require.indexOf("client_secret") != -1) options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
 
-  return new Promise(function (fulfill) {
+  return new Promise(function (fulfill, reject) {
     // Get OAuth Access Token, if needed
     if (_apis.inventory.require.indexOf("oauth") != -1) {
-
       // If already logged in, add token to request
       if (session.authContext != null &&
           typeof session.authContext.access_token !== 'undefined') {
@@ -213,9 +210,7 @@ function setNewReviewOptions(function_input) {
         // Otherwise redirect to login page
         res.redirect('/login');
       }
-
-    }
-    else fulfill({
+    } else fulfill({
       options: options,
       item_id: params.id,
       res: res,
@@ -263,6 +258,7 @@ function submitNewReview(function_input) {
   var options = function_input.options;
   var item_id = function_input.item_id;
   var res = function_input.res;
+    console.log('submitNewReview');
 
   http.request(options)
     .then(function (data) {

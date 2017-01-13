@@ -206,7 +206,7 @@ function redirectToRoot(function_input) {
     var req = function_input.req;
     var res = function_input.res;
     var redirectTo = req.session.redirectTo;
-    console.log("redirect to: ", redirectTo);
+    // console.log("redirect to: ", redirectTo);
 
     if (redirectTo != null) {
         delete req.session.redirectTo;
