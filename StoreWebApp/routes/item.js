@@ -213,13 +213,13 @@ function sendItemReq(function_input) {
   var req = function_input.req;
     console.log("sendItemReq");
 
+    // TODO: use Promise.all here instead of one at at time
   // Make API call for item and reviews data
   return new Promise(function (fulfill, reject) {
     http.request(getItem_options)
       .then(function (item) {
         http.request(getItemReviews_options)
           .then(function (reviews) {
-
             fulfill({
               data: {
                 item: item,
@@ -228,10 +228,15 @@ function sendItemReq(function_input) {
               res: res,
               req: req
             });
-          })
+          }).fail(function (reason) {
+              reject({
+                  err: reason,
+                  req: req,
+                  res: res
+              });
+          }
           .done();
-      })
-      .fail(function (reason) {
+      }).fail(function (reason) {
         reject({
           err: reason,
           req: req,
