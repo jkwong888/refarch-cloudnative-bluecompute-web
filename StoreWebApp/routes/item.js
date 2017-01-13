@@ -37,7 +37,6 @@ router.get('/:id/submitReview', function (req, res) {
   return new Promise(function (fulfill) {
     // Get OAuth Access Token, if needed
     if (_apis.inventory.require.indexOf("oauth") != -1) {
-
       // If already logged in, add token to request
       if (session.authContext != null &&
           typeof session.authContext.access_token !== 'undefined') {
@@ -106,6 +105,7 @@ function setGetItemOptions(function_input) {
   var req = function_input.req;
   var res = function_input.res;
   var params = req.params;
+    console.log("setGetItemOptions");
 
   var item_url = api_url.stringify({
     protocol: _apiServer.protocol,
@@ -142,8 +142,13 @@ function setGetItemOptions(function_input) {
     headers: {}
   };
 
-  if (_apis.inventory.require.indexOf("client_id") != -1) getItemReviews_options.headers["X-IBM-Client-Id"] = _myApp.client_id;
-  if (_apis.inventory.require.indexOf("client_secret") != -1) getItemReviews_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
+  if (_apis.inventory.require.indexOf("client_id") != -1) {
+      getItemReviews_options.headers["X-IBM-Client-Id"] = _myApp.client_id;
+  }
+
+  if (_apis.inventory.require.indexOf("client_secret") != -1) {
+      getItemReviews_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
+  }
 
   Promise.resolve({
           req: req,
@@ -224,6 +229,7 @@ function sendItemReq(function_input) {
   var getItemReviews_options = function_input.getItemReviews_options;
   var res = function_input.res;
   var req = function_input.req;
+    console.log("sendItemReq");
 
   // Make API call for item and reviews data
   return new Promise(function (fulfill, reject) {
