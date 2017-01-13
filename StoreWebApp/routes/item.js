@@ -16,7 +16,9 @@ var _apis = config.get('APIs');
 
 /* Handle the GET request for obtaining item information and render the page */
 router.get('/:id', function (req, res) {
-    session = req.session;
+    var session = req.session;
+
+    console.log("session:", session);
     res.locals.itemId = req.params.id;
 
     var options = setGetItemOptions({req: req, res: res});
@@ -31,7 +33,7 @@ router.get('/:id', function (req, res) {
 
 /* Handle the GET request for creating a new item review */
 router.get('/:id/submitReview', function (req, res) {
-    session = req.session;
+    var session = req.session;
 
     var options = setGetItemOptions({req: req, res: res});
 
@@ -46,7 +48,7 @@ router.get('/:id/submitReview', function (req, res) {
 
 /* Handle the POST request for creating a new item review */
 router.post('/:id/submitReview', function (req, res) {
-  session = req.session;
+    var session = req.session;
 
     var options = setNewReviewOptions({req: req, res: res});
 

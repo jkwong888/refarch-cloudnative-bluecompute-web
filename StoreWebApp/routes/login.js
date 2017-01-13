@@ -158,7 +158,7 @@ function getAccessToken(function_input) {
 //              console.log("BODY: ", parsedBody);
               // Access and identity tokens will be received in response body
 
-              if (parsedBody.error == null) {
+              if (parsedBody.error != null) {
                   console.log("error:" + parsedBody.error);
               }
 
@@ -242,35 +242,6 @@ function getTokenIntrospect(function_input) {
               });
           }).done();
     });
-}
-
-function loginWithOAuth(req, res) {
-  var form_body = req.body;
-  var username = form_body.username;
-  var password = form_body.password;
-
-//  console.log("loginWithOAuth");
-
-  return new Promise(function (fulfill) {
-    oauth.login(username, password, session)
-      .then(function () {
-        fulfill(res);
-      })
-      .done();
-  });
-}
-
-//TODO: format the other pages with login / logout link
-
-function renderPage(res) {
-  // Redirect to the inventory view
-  res.redirect('/inventory');
-}
-
-function renderErrorPage(function_input) {
-  var err = function_input.err;
-  var res = function_input.res;
-  res.render('error', {reason: err});
 }
 
 module.exports = router;
