@@ -173,7 +173,6 @@ function doOAuth(function_input) {
     var res = function_input.res;
 
     var session = req.session;
-    var options = function_input.options;
     var params = req.params;
 
     console.log("doOAuth");
@@ -190,15 +189,20 @@ function doOAuth(function_input) {
                 }
 
             // add token to authorization
-            options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+            if (function_input.options != null) {
+                function_input.options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+            }
+
+            if (function_input.getItem_options != null) {
+                function_input.getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+            }
+
+            if (function_input.getItemReviews_options != null) {
+                function_input.getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+            }
         }
 
-        fulfill({
-            options: options,
-            item_id: params.id,
-            res: res,
-            req: req
-        });
+        fulfill(function_input);
     });
 }
 
