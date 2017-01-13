@@ -209,8 +209,8 @@ function doOAuth(function_input) {
         fulfill({
             options: function_input.options,
             item_id: params.id,
-            getItemReviews_options = function_input.getItemReviews_options,
-            getItem_options = function_input.getItem_options,
+            getItemReviews_options: function_input.getItemReviews_options,
+            getItem_options: function_input.getItem_options,
             res: function_input.res,
             req: function_input.req
 
