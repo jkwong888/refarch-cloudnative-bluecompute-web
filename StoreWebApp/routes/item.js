@@ -178,15 +178,18 @@ function doOAuth(function_input) {
     console.log("doOAuth");
 
     return new Promise(function (fullfill, reject) {
+        console.log("hi", function_input);
         // Get OAuth Access Token, if needed
         if (_apis.inventory.require.indexOf("oauth") != -1) {
             // If already logged in, add token to request
             if (session.authContext == null ||
                 typeof session.authContext.access_token == 'undefined') {
                     // Otherwise redirect to login page
+                    console.log("sending you to /login");
                     req.session.redirectTo = '/item/' + params.id + '/submitReview';
                     res.redirect('/login');
-                }
+                    return;
+            }
 
             // add token to authorization
             if (function_input.options != null) {
