@@ -180,7 +180,6 @@ function doOAuth(function_input) {
     console.log("doOAuth");
 
     return new Promise(function (fullfill, reject) {
-        console.log("hi", function_input);
         // Get OAuth Access Token, if needed
         if (_apis.inventory.require.indexOf("oauth") != -1) {
             // If already logged in, add token to request
@@ -207,6 +206,7 @@ function doOAuth(function_input) {
             }
         }
 
+        console.log("function_input:", function_input);
         fulfill(function_input);
     });
 }
