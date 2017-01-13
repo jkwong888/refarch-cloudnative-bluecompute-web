@@ -177,9 +177,8 @@ function doOAuth(function_input) {
     var session = req.session;
     var params = req.params;
 
-    console.log("doOAuth");
-
     return new Promise(function (fullfill, reject) {
+        console.log("doOAuth");
         // Get OAuth Access Token, if needed
         if (_apis.inventory.require.indexOf("oauth") != -1) {
             // If already logged in, add token to request
@@ -206,15 +205,17 @@ function doOAuth(function_input) {
             }
         }
 
-        fulfill({
+        var my_opts = {
             options: function_input.options,
             item_id: params.id,
             getItemReviews_options: function_input.getItemReviews_options,
             getItem_options: function_input.getItem_options,
             res: function_input.res,
             req: function_input.req
+        };
+        console.log(my_opts);
 
-        });
+        fulfill(my_opts);
     });
 }
 
