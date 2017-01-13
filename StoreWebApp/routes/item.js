@@ -16,51 +16,31 @@ var _apis = config.get('APIs');
 
 /* Handle the GET request for obtaining item information and render the page */
 router.get('/:id', function (req, res) {
-  session = req.session;
-  res.locals.itemId = req.params.id;
+    session = req.session;
+    res.locals.itemId = req.params.id;
 
-  Promise.resolve({
-          req: req,
-          res: res
-  }).then(setGetItemOptions)
-    .then(sendItemReq)
-    .then(renderPage)
-    .catch(renderErrorPage)
-    .done();
+    var options = setGetItemOptions({req: req, res: res});
+
+    Promise.resolve(options)
+        .then(sendItemReq)
+        .then(renderPage)
+        .catch(renderErrorPage)
+        .done();
 
 });
 
 /* Handle the GET request for creating a new item review */
 router.get('/:id/submitReview', function (req, res) {
-  session = req.session;
+    session = req.session;
 
-  return new Promise(function (fulfill) {
-    // Get OAuth Access Token, if needed
-    if (_apis.inventory.require.indexOf("oauth") != -1) {
-      // If already logged in, add token to request
-      if (session.authContext != null &&
-          typeof session.authContext.access_token !== 'undefined') {
-        fulfill({
-          res: res,
-          req: req
-        });
-      } else {
-        // Otherwise redirect to login page
-        var params = req.params;
-        req.session.redirectTo = '/item/' + params.id + '/submitReview';
-        res.redirect('/login');
-      }
-    } else {
-        fulfill({
-            req: req,
-            res: res
-        });
-    }
-  }).then(setGetItemOptions)
-    .then(sendItemReq)
-    .then(renderReviewPage)
-    .catch(renderErrorPage)
-    .done();
+    var options = setGetItemOptions({req: req, res: res});
+
+    Promise.resolve(options)
+        .then(doOAuth)
+        .then(sendItemReq)
+        .then(renderReviewPage)
+        .catch(renderErrorPage)
+        .done();
 
 });
 
@@ -68,160 +48,149 @@ router.get('/:id/submitReview', function (req, res) {
 router.post('/:id/submitReview', function (req, res) {
   session = req.session;
 
-  return new Promise(function (fulfill, reject) {
-    // Get OAuth Access Token, if needed
-    if (_apis.inventory.require.indexOf("oauth") != -1) {
+    var options = setNewReviewOptions({req: req, res: res});
 
-      // If already logged in, add token to request
-      if (session.authContext != null &&
-          typeof session.authContext.access_token !== 'undefined') {
-        getItem_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        getItemReviews_options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        fulfill({
-          getItem_options: getItem_options,
-          getItemReviews_options: getItemReviews_options,
-          res: res,
-          req: req
-        });
-      } else {
-        // Otherwise redirect to login page
-        res.redirect('/login');
-      }
-    } else {
-        fulfill({
-            req: req,
-            res: res
-        });
-    }
-  })
-    .then(setNewReviewOptions)
-    .then(submitNewReview)
-    .catch(renderErrorPage)
-    .done();
+    Promise.resolve(options)
+        .then(doOAuth)
+        .then(submitNewReview)
+        .catch(renderErrorPage)
+        .done();
 
 });
 
 function setGetItemOptions(function_input) {
-  var req = function_input.req;
-  var res = function_input.res;
-  var params = req.params;
     console.log("setGetItemOptions");
+    var req = function_input.req;
+    var res = function_input.res;
+    var params = req.params;
 
-  var item_url = api_url.stringify({
-    protocol: _apiServer.protocol,
-    host: _apiServer.host,
-    org: _apiServerOrg,
-    cat: _apiServerCatalog,
-    api: _apis.inventory.base_path,
-    operation: "items/" + params.id
-  });
+    var item_url = api_url.stringify({
+        protocol: _apiServer.protocol,
+        host: _apiServer.host,
+        org: _apiServerOrg,
+        cat: _apiServerCatalog,
+        api: _apis.inventory.base_path,
+        operation: "items/" + params.id
+    });
 
-  var getItem_options = {
-    method: 'GET',
-    url: item_url,
-    strictSSL: false,
-    headers: {}
-  };
+    var getItem_options = {
+        method: 'GET',
+        url: item_url,
+        strictSSL: false,
+        headers: {}
+    };
 
-  if (_apis.inventory.require.indexOf("client_id") != -1) getItem_options.headers["X-IBM-Client-Id"] = _myApp.client_id;
-  if (_apis.inventory.require.indexOf("client_secret") != -1) getItem_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
+    var reviews_url = api_url.stringify({
+        protocol: _apiServer.protocol,
+        host: _apiServer.host,
+        org: _apiServerOrg,
+        cat: _apiServerCatalog,
+        api: _apis.inventory.base_path,
+        operation: "reviews/list?itemId=" + params.id
+    });
 
-  var reviews_url = api_url.stringify({
-    protocol: _apiServer.protocol,
-    host: _apiServer.host,
-    org: _apiServerOrg,
-    cat: _apiServerCatalog,
-    api: _apis.inventory.base_path,
-    operation: "reviews/list?itemId=" + params.id
-  });
+    var getItemReviews_options = {
+        method: 'GET',
+        url: reviews_url,
+        strictSSL: false,
+        headers: {}
+    };
 
-  var getItemReviews_options = {
-    method: 'GET',
-    url: reviews_url,
-    strictSSL: false,
-    headers: {}
-  };
+    if (_apis.inventory.require.indexOf("client_id") != -1) {
+        getItem_options.headers["X-IBM-Client-Id"] = _myApp.client_id;
+        getItemReviews_options.headers["X-IBM-Client-Id"] = _myApp.client_id;
+    }
+    if (_apis.inventory.require.indexOf("client_secret") != -1) {
+        getItem_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
+        getItemReviews_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
+    }
 
-  if (_apis.inventory.require.indexOf("client_id") != -1) {
-      getItemReviews_options.headers["X-IBM-Client-Id"] = _myApp.client_id;
-  }
-
-  if (_apis.inventory.require.indexOf("client_secret") != -1) {
-      getItemReviews_options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
-  }
-
-  Promise.resolve({
-          req: req,
-          getItem_options: getItem_options,
-          getItemReviews_options: getItemReviews_options,
-          res: res
-  });
+    return {
+        req: req,
+        res: res,
+        getItem_options: getItem_options,
+        getItemReviews_options: getItemReviews_options
+    };
 }
 
 function setNewReviewOptions(function_input) {
-  var req = function_input.req;
-  var res = function_input.res;
-
-  var params = req.params;
-  var form_body = req.body;
-
     console.log('setNewReviewOptions');
+    var req = function_input.req;
+    var res = function_input.res;
 
-  var reqBody = {
-    review_date: new Date(),
-    rating: form_body.rating,
-    reviewer_name: req.session.authContext.username
-  };
+    var params = req.params;
+    var form_body = req.body;
 
-  // Add optional portions to the request body
-  if (form_body.email !== '') reqBody.reviewer_email = form_body.email;
-  if (form_body.comment !== '') reqBody.comment = form_body.comment;
+    var reqBody = {
+        review_date: new Date(),
+        rating: form_body.rating,
+        reviewer_name: req.session.authContext.username
+    };
 
-  var post_reviews_url = api_url.stringify({
-    protocol: _apiServer.protocol,
-    host: _apiServer.host,
-    org: _apiServerOrg,
-    cat: _apiServerCatalog,
-    api: _apis.inventory.base_path,
-    operation: "reviews/comment?itemId=" + params.id
-  });
+    // Add optional portions to the request body
+    if (form_body.email !== '') {
+        reqBody.reviewer_email = form_body.email;
+    }
+    if (form_body.comment !== '') {
+        reqBody.comment = form_body.comment;
+    }
 
-  var options = {
-    method: 'POST',
-    url: post_reviews_url,
-    strictSSL: false,
-    headers: {},
-    body: reqBody,
-    JSON: true
-  };
-
-  if (_apis.inventory.require.indexOf("client_id") != -1) options.headers["X-IBM-Client-Id"] = _myApp.client_id;
-  if (_apis.inventory.require.indexOf("client_secret") != -1) options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
-
-  return new Promise(function (fulfill, reject) {
-    // Get OAuth Access Token, if needed
-    if (_apis.inventory.require.indexOf("oauth") != -1) {
-      // If already logged in, add token to request
-      if (session.authContext != null &&
-          typeof session.authContext.access_token !== 'undefined') {
-        options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
-        fulfill({
-          options: options,
-          item_id: params.id,
-          res: res,
-          req: req
-        });
-      } else {
-        // Otherwise redirect to login page
-        res.redirect('/login');
-      }
-    } else fulfill({
-      options: options,
-      item_id: params.id,
-      res: res,
-      req: req
+    var post_reviews_url = api_url.stringify({
+        protocol: _apiServer.protocol,
+        host: _apiServer.host,
+        org: _apiServerOrg,
+        cat: _apiServerCatalog,
+        api: _apis.inventory.base_path,
+        operation: "reviews/comment?itemId=" + params.id
     });
-  });
+
+    var options = {
+        method: 'POST',
+        url: post_reviews_url,
+        strictSSL: false,
+        headers: {},
+        body: reqBody,
+        JSON: true
+    };
+
+    if (_apis.inventory.require.indexOf("client_id") != -1) {
+        options.headers["X-IBM-Client-Id"] = _myApp.client_id;
+    }
+    if (_apis.inventory.require.indexOf("client_secret") != -1) {
+        options.headers["X-IBM-Client-Secret"] = _myApp.client_secret;
+    }
+
+    return {
+        options: options,
+        item_id: params.id,
+        res: res,
+        req: req
+    };
+}
+
+function doOAuth(function_input) {
+    return new Promise(function (fullfill, reject) {
+        // Get OAuth Access Token, if needed
+        if (_apis.inventory.require.indexOf("oauth") != -1) {
+            // If already logged in, add token to request
+            if (session.authContext == null ||
+                typeof session.authContext.access_token == 'undefined') {
+                    // Otherwise redirect to login page
+                    req.session.redirectTo = '/item/' + params.id + '/submitReview';
+                    res.redirect('/login');
+            }
+
+            // add token to authorization
+            options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
+        }
+
+        fulfill({
+            options: options,
+            item_id: params.id,
+            res: res,
+            req: req
+        });
+    });
 }
 
 function sendItemReq(function_input) {
