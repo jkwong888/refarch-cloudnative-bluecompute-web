@@ -213,18 +213,17 @@ function doOAuth(function_input) {
             res: function_input.res,
             req: function_input.req
         };
-        console.log(my_opts);
 
         fulfill(my_opts);
     });
 }
 
 function sendItemReq(function_input) {
+  console.log("sendItemReq");
   var getItem_options = function_input.getItem_options;
   var getItemReviews_options = function_input.getItemReviews_options;
   var res = function_input.res;
   var req = function_input.req;
-    console.log("sendItemReq");
 
     // TODO: use Promise.all here instead of one at at time
   // Make API call for item and reviews data
