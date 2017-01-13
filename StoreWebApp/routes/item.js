@@ -234,7 +234,7 @@ function sendItemReq(function_input) {
                   req: req,
                   res: res
               });
-          }
+          })
           .done();
       }).fail(function (reason) {
         reject({
