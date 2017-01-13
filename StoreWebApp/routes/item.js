@@ -169,6 +169,15 @@ function setNewReviewOptions(function_input) {
 }
 
 function doOAuth(function_input) {
+    var req = function_input.req;
+    var res = function_input.res;
+
+    var session = req.session;
+    var options = function_input.options;
+    var params = req.params;
+
+    console.log("doOAuth");
+
     return new Promise(function (fullfill, reject) {
         // Get OAuth Access Token, if needed
         if (_apis.inventory.require.indexOf("oauth") != -1) {
@@ -178,7 +187,7 @@ function doOAuth(function_input) {
                     // Otherwise redirect to login page
                     req.session.redirectTo = '/item/' + params.id + '/submitReview';
                     res.redirect('/login');
-            }
+                }
 
             // add token to authorization
             options.headers.Authorization = 'Bearer ' + session.authContext.access_token;
