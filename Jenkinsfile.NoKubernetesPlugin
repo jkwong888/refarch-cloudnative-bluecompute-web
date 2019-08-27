@@ -11,8 +11,8 @@ pipeline {
     }
 
     parameters {
-        string(name: 'REGISTRY', defaulValue: 'docker.io', description: 'Container Registry URL')
-        string(name: 'REGISTRY_NAMESPACE', defaulValue: 'ibmcase', description: 'registry namespace to push image to')
+        string(name: 'REGISTRY', defaultValue: 'docker.io', description: 'Container Registry URL')
+        string(name: 'REGISTRY_NAMESPACE', defaultValue: 'ibmcase', description: 'registry namespace to push image to')
         string(name: 'IMAGE_NAME', defaultValue: 'bluecompute-web', description: 'name of image')
         credentials(name: 'REGISTRY_CREDENTIALS', defaultValue: 'registry-credentials-id', description: 'Credentials for registry', credentialType: 'Username with password')
         credentials(name: 'KUBECONFIG', description: 'Kubeconfig secret file', credentialType: 'Secret file')
