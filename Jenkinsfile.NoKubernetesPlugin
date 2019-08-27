@@ -5,29 +5,47 @@
 */
 
 pipeline {
-    checkout scm
-
+    
     agent {
         label "docker"
     }
 
+    parameters {
+        string(name: 'REGISTRY', defaulValue: 'docker.io', description: 'Container Registry URL')
+        string(name: 'REGISTRY_NAMESPACE', defaulValue: 'ibmcase', description: 'registry namespace to push image to')
+        string(name: 'IMAGE_NAME', defaultValue: 'bluecompute-web', description: 'name of image')
+        credentials(name: 'REGISTRY_CREDENTIALS', defaultValue: 'registry-credentials-id', description: 'Credentials for registry', credentialType: 'Username with password')
+        credentials(name: 'KUBECONFIG', description: 'Kubeconfig secret file', credentialType: 'Secret file')
+        string(name: 'NAMESPACE', defaultValue: 'bluecompute', description: 'Kube namespace to deploy to')
+        string(name: 'POD_NAME', defaultValue: 'web', description: 'name of pod to update image')
+        string(name: 'DEPLOYMENT_LABELS', defaultValue: 'app=web,tier=frontend,version=v1')
+    }
+
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
         stage('Build Docker Image') {
-            sh """
-            #!/bin/bash
-            if [ "${env.REGISTRY}" = "docker.io" ]; then
+            steps {
+              sh """
+              #!/bin/bash
+              if [ "${env.REGISTRY}" = "docker.io" ]; then
                 echo 'Building Docker Hub Image'
                 docker build -t ${env.IMAGE_NAME}:${env.BUILD_NUMBER} .
-            else
+              else
                 echo 'Building Private Registry Image'
-                docker build -t ${env.REGISTRY}/${env.NAMESPACE}/${env.IMAGE_NAME}:${env.BUILD_NUMBER} .
-            fi
+                docker build -t ${env.REGISTRY}/${env.REGISTRY_NAMESPACE}/${env.IMAGE_NAME}:${env.BUILD_NUMBER} .
+              fi
             """
+            }
         }
 
         stage('Push Docker Image to Registry') {
-            withCredentials([usernamePassword(credentialsId: registryCredsID,
+          steps {
+            withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS,
                                             usernameVariable: 'USERNAME',
                                             passwordVariable: 'PASSWORD')]) {
                 sh """
@@ -40,34 +58,39 @@ pipeline {
                     docker push ${env.IMAGE_NAME}:${env.BUILD_NUMBER}
                 else
                     echo 'Pushing to Private Registry'
-                    docker push ${env.REGISTRY}/${env.NAMESPACE}/${env.IMAGE_NAME}:${env.BUILD_NUMBER}
+                    docker push ${env.REGISTRY}/${env.REGISTRY_NAMESPACE}/${env.IMAGE_NAME}:${env.BUILD_NUMBER}
                 fi
                 """
             }
+          }
         }
 
         stage('Deploy new Docker Image') {
-            sh """
-            #!/bin/bash
-            DEPLOYMENT=`kubectl --namespace=${env.NAMESPACE} get deployments -l ${env.DEPLOYMENT_LABELS} -o name`
-            kubectl --namespace=${env.NAMESPACE} get \${DEPLOYMENT}
-            if [ \${?} -ne "0" ]; then
-                # No deployment to update
-                echo 'No deployment to update'
-                exit 1
-            fi
+          steps {
+              withCredentials([file(credentialsId: env.KUBECONFIG, variable: 'KUBECONFIG')]) {
+                    sh """
+                    #!/bin/bash
+                    DEPLOYMENT=`kubectl --kubeconfig=$KUBECONFIG --namespace=${env.NAMESPACE} get deployments -l ${env.DEPLOYMENT_LABELS} -o name`
+                    kubectl --kubeconfig=$KUBECONFIG --namespace=${env.NAMESPACE} get \${DEPLOYMENT}
+                    if [ \${?} -ne "0" ]; then
+                        # No deployment to update
+                        echo 'No deployment to update'
+                        exit 1
+                    fi
 
-            # Get image
-            if [ "${env.REGISTRY}" = "docker.io" ]; then
-                IMAGE=${env.IMAGE_NAME}:${env.BUILD_NUMBER}
-            else
-                IMAGE=${env.REGISTRY}/${env.NAMESPACE}/${env.IMAGE_NAME}:${env.BUILD_NUMBER}
-            fi
+                    # Get image
+                    if [ "${env.REGISTRY}" = "docker.io" ]; then
+                        IMAGE=${env.IMAGE_NAME}:${env.BUILD_NUMBER}
+                    else
+                        IMAGE=${env.REGISTRY}/${env.NAMESPACE}/${env.IMAGE_NAME}:${env.BUILD_NUMBER}
+                    fi
 
-            # Update deployment and check rollout status
-            kubectl --namespace=${env.NAMESPACE} set image \${DEPLOYMENT} ${env.POD_NAME}=\${IMAGE}
-            kubectl --namespace=${env.NAMESPACE} rollout status \${DEPLOYMENT}
-            """
+                    # Update deployment and check rollout status
+                    kubectl --kubeconfig=$KUBECONFIG --namespace=${env.NAMESPACE} set image \${DEPLOYMENT} ${env.POD_NAME}=\${IMAGE}
+                    kubectl --kubeconfig=$KUBECONFIG --namespace=${env.NAMESPACE} rollout status \${DEPLOYMENT}
+                    """
+              }
+          }
         }
     }
 }
